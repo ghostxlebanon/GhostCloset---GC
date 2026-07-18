@@ -6,14 +6,9 @@ const storyPath = new URL("../app/story/page.tsx", import.meta.url);
 const stylesPath = new URL("../app/globals.css", import.meta.url);
 const storyStylesPath = new URL("../app/story/story.module.css", import.meta.url);
 const productsDirectory = new URL("../public/products/", import.meta.url);
-const gloveOutputPath = new URL("../public/products/specter-gloves-leather.webp", import.meta.url);
 const cassockOutputPath = new URL("../public/products/ghost-cassock-hd-v3.webp", import.meta.url);
 const EXPECTED_CASSOCK_BYTES = 55470;
 const EXPECTED_CASSOCK_SHA256 = "f8300f6ee123262b07aafd13cc2255d0912744856891a88a4e73195062dd92ef";
-
-const gloveChunkPaths = [0, 1, 2, 3, 4].map((index) =>
-  new URL(`../assets/specter-gloves/part-${String(index).padStart(2, "0")}.txt`, import.meta.url),
-);
 
 const cassockChunkNames = [
   "part-00.txt",
@@ -41,34 +36,33 @@ const cassockChunkPaths = cassockChunkNames.map(
 );
 
 async function decodeChunks(chunkPaths) {
-  const encodedImage = (
-    await Promise.all(chunkPaths.map((path) => readFile(path, "utf8")))
-  ).join("").trim();
-  return Buffer.from(encodedImage, "base64");
+  const parts = [];
+  for (const path of chunkPaths) {
+    try {
+      parts.push(await readFile(path, "utf8"));
+    } catch {
+      const filename = path.pathname.split("/").pop();
+      throw new Error(`Missing Ghost Cassock HD chunk: ${filename}`);
+    }
+  }
+  return Buffer.from(parts.join("").trim(), "base64");
 }
 
 await mkdir(productsDirectory, { recursive: true });
-const [gloveImage, cassockImage] = await Promise.all([
-  decodeChunks(gloveChunkPaths),
-  decodeChunks(cassockChunkPaths),
-]);
-
+const cassockImage = await decodeChunks(cassockChunkPaths);
 const cassockHash = createHash("sha256").update(cassockImage).digest("hex");
+
 if (cassockImage.length !== EXPECTED_CASSOCK_BYTES || cassockHash !== EXPECTED_CASSOCK_SHA256) {
   throw new Error(`Ghost Cassock HD verification failed: ${cassockImage.length} bytes / ${cassockHash}`);
 }
 
-await Promise.all([
-  writeFile(gloveOutputPath, gloveImage),
-  writeFile(cassockOutputPath, cassockImage),
-]);
+await writeFile(cassockOutputPath, cassockImage);
 
 // The cache-busted HD filename prevents browsers from reusing any earlier,
-// heavily compressed Ghost Cassock image.
+// heavily compressed Ghost Cassock image. Existing product assets are untouched.
 const pageOriginal = await readFile(pagePath, "utf8");
 const pageUpdated = pageOriginal
   .replace(/^\s*gallery:\s*\[[^\n]*\],\s*$/gm, "")
-  .replaceAll("/products/specter-gloves-leather.png", "/products/specter-gloves-leather.webp")
   .replaceAll("/products/male-ghost-cassock.png", "/products/ghost-cassock-hd-v3.webp")
   .replaceAll("/products/ghost-cassock.webp", "/products/ghost-cassock-hd-v3.webp")
   .replaceAll("/products/ghost-cassock-hd-v2.webp", "/products/ghost-cassock-hd-v3.webp");
@@ -79,7 +73,6 @@ if (pageUpdated !== pageOriginal) {
 
 const storyOriginal = await readFile(storyPath, "utf8");
 const storyUpdated = storyOriginal
-  .replaceAll("/products/specter-gloves-leather.png", "/products/specter-gloves-leather.webp")
   .replaceAll("/products/male-ghost-cassock.png", "/products/ghost-cassock-hd-v3.webp")
   .replaceAll("/products/ghost-cassock.webp", "/products/ghost-cassock-hd-v3.webp")
   .replaceAll("/products/ghost-cassock-hd-v2.webp", "/products/ghost-cassock-hd-v3.webp");
