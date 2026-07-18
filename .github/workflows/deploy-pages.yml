@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -27,26 +29,8 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Install dependencies
+      - name: Install locked dependencies
         run: npm ci
-
-      - name: Apply storefront security and product corrections
-        run: node scripts/harden-storefront.mjs
-
-      - name: Retrieve storefront imagery
-        run: bash scripts/download-storefront-assets.sh
-
-      - name: Preserve storefront corrections and imagery
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/page.tsx app/globals.css public/products public/editorial
-          if ! git diff --cached --quiet; then
-            git commit -m "Harden Ghost Closet storefront"
-            if ! git push origin HEAD:main; then
-              echo "The deployment can continue even though generated storefront changes could not be pushed."
-            fi
-          fi
 
       - name: Build static storefront
         run: npm run build:pages
@@ -69,29 +53,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-  status:
-    if: always()
-    runs-on: ubuntu-latest
-    needs: [build, deploy]
-    steps:
-      - name: Check out latest repository state
-        uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - name: Record deployment result
-        env:
-          BUILD_RESULT: ${{ needs.build.result }}
-          DEPLOY_RESULT: ${{ needs.deploy.result }}
-          RUN_ID: ${{ github.run_id }}
-        run: |
-          printf '# GitHub Pages deployment\n\nBuild: **%s**\n\nDeploy: **%s**\n\nRun ID: **%s**\n\nTarget: <https://ghostxlebanon.github.io/GhostCloset---GC/>\n' \
-            "$BUILD_RESULT" "$DEPLOY_RESULT" "$RUN_ID" > DEPLOYMENT_STATUS.md
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add DEPLOYMENT_STATUS.md
-          if ! git diff --cached --quiet; then
-            git commit -m "Record GitHub Pages deployment status"
-            git push origin HEAD:main
-          fi
