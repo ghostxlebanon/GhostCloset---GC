@@ -1,15 +1,148 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 
 const pagePath = new URL("../app/page.tsx", import.meta.url);
-const original = await readFile(pagePath, "utf8");
+const storyPath = new URL("../app/story/page.tsx", import.meta.url);
+const stylesPath = new URL("../app/globals.css", import.meta.url);
+const storyStylesPath = new URL("../app/story/story.module.css", import.meta.url);
+const productsDirectory = new URL("../public/products/", import.meta.url);
+const gloveOutputPath = new URL("../public/products/specter-gloves-leather.webp", import.meta.url);
+const cassockOutputPath = new URL("../public/products/ghost-cassock-hd-v2.webp", import.meta.url);
 
-// Product cards and product dialogs must use only the primary `image` field.
-// Remove every optional gallery declaration before the production build.
-const updated = original.replace(/^\s*gallery:\s*\[[^\n]*\],\s*$/gm, "");
+const gloveChunkPaths = [0, 1, 2, 3, 4].map((index) =>
+  new URL(`../assets/specter-gloves/part-${String(index).padStart(2, "0")}.txt`, import.meta.url),
+);
 
-if (updated !== original) {
-  await writeFile(pagePath, updated);
-  console.log("Removed secondary product images; primary images only.");
-} else {
-  console.log("Products already use primary images only.");
+const cassockChunkNames = [
+  "part-00.txt",
+  "part-01-00.txt",
+  "part-01-01.txt",
+  "part-01-02.txt",
+  "part-01-03.txt",
+  "part-01-04.txt",
+  "part-01-05.txt",
+  "part-02-00.txt",
+  "part-02-01.txt",
+  "part-02-02.txt",
+  "part-02-03.txt",
+  "part-02-04.txt",
+  "part-02-05.txt",
+  "part-03-00.txt",
+  "part-03-01.txt",
+  "part-03-02.txt",
+  "part-03-03.txt",
+  "part-03-04.txt",
+  "part-03-05.txt",
+];
+const cassockChunkPaths = cassockChunkNames.map(
+  (name) => new URL(`../assets/ghost-cassock-hd/${name}`, import.meta.url),
+);
+
+async function restoreImage(chunkPaths, outputPath) {
+  const encodedImage = (
+    await Promise.all(chunkPaths.map((path) => readFile(path, "utf8")))
+  ).join("").trim();
+  await writeFile(outputPath, Buffer.from(encodedImage, "base64"));
 }
+
+await mkdir(productsDirectory, { recursive: true });
+await Promise.all([
+  restoreImage(gloveChunkPaths, gloveOutputPath),
+  restoreImage(cassockChunkPaths, cassockOutputPath),
+]);
+
+// Product cards and dialogs use only the primary image. The cache-busted HD
+// filename prevents browsers from reusing the earlier heavily compressed file.
+const pageOriginal = await readFile(pagePath, "utf8");
+const pageUpdated = pageOriginal
+  .replace(/^\s*gallery:\s*\[[^\n]*\],\s*$/gm, "")
+  .replaceAll("/products/specter-gloves-leather.png", "/products/specter-gloves-leather.webp")
+  .replaceAll("/products/male-ghost-cassock.png", "/products/ghost-cassock-hd-v2.webp")
+  .replaceAll("/products/ghost-cassock.webp", "/products/ghost-cassock-hd-v2.webp");
+
+if (pageUpdated !== pageOriginal) {
+  await writeFile(pagePath, pageUpdated);
+}
+
+const storyOriginal = await readFile(storyPath, "utf8");
+const storyUpdated = storyOriginal
+  .replaceAll("/products/specter-gloves-leather.png", "/products/specter-gloves-leather.webp")
+  .replaceAll("/products/male-ghost-cassock.png", "/products/ghost-cassock-hd-v2.webp")
+  .replaceAll("/products/ghost-cassock.webp", "/products/ghost-cassock-hd-v2.webp");
+
+if (storyUpdated !== storyOriginal) {
+  await writeFile(storyPath, storyUpdated);
+}
+
+const responsiveMarker = "/* PRODUCT_IMAGES_HD_V2 */";
+const responsiveStyles = `
+${responsiveMarker}
+.product-image img,
+.modal-image-stage img,
+.search-results img,
+.cart-line img,
+.secure-purchase-line img,
+.ghost-line-grid img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  image-rendering: auto;
+}
+
+img[src$="ghost-cassock-hd-v2.webp"] {
+  image-rendering: auto;
+  object-position: 50% 34%;
+  filter: none;
+}
+
+.ghost-line-grid img[src$="ghost-cassock-hd-v2.webp"] {
+  mix-blend-mode: normal;
+  filter: none;
+}
+
+@media (max-width: 720px) {
+  .modal-image-stage img {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 76svh;
+    margin-inline: auto;
+    object-fit: contain;
+    object-position: center;
+  }
+
+  .ghost-line-grid img[src$="ghost-cassock-hd-v2.webp"] {
+    min-height: 0;
+    object-fit: cover;
+    object-position: 50% 30%;
+  }
+}
+`;
+
+const stylesOriginal = await readFile(stylesPath, "utf8");
+if (!stylesOriginal.includes(responsiveMarker)) {
+  await writeFile(stylesPath, `${stylesOriginal.trimEnd()}\n\n${responsiveStyles}`);
+}
+
+const storyResponsiveMarker = "/* STORY_PRODUCT_IMAGES_HD_V2 */";
+const storyResponsiveStyles = `
+${storyResponsiveMarker}
+.productGrid img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  image-rendering: auto;
+}
+`;
+
+const storyStylesOriginal = await readFile(storyStylesPath, "utf8");
+if (!storyStylesOriginal.includes(storyResponsiveMarker)) {
+  await writeFile(storyStylesPath, `${storyStylesOriginal.trimEnd()}\n\n${storyResponsiveStyles}`);
+}
+
+console.log("Installed full-resolution Ghost Cassock and responsive product imagery.");
