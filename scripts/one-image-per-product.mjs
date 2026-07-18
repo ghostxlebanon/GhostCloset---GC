@@ -6,47 +6,58 @@ const stylesPath = new URL("../app/globals.css", import.meta.url);
 const storyStylesPath = new URL("../app/story/story.module.css", import.meta.url);
 const productsDirectory = new URL("../public/products/", import.meta.url);
 const gloveOutputPath = new URL("../public/products/specter-gloves-leather.webp", import.meta.url);
+const cassockOutputPath = new URL("../public/products/ghost-cassock.webp", import.meta.url);
 
 const gloveChunkPaths = [0, 1, 2, 3, 4].map((index) =>
   new URL(`../assets/specter-gloves/part-${String(index).padStart(2, "0")}.txt`, import.meta.url),
 );
+const cassockChunkPaths = [0, 1, 2].map((index) =>
+  new URL(`../assets/ghost-cassock/part-${String(index).padStart(2, "0")}.txt`, import.meta.url),
+);
 
-const encodedGloveImage = (
-  await Promise.all(gloveChunkPaths.map((path) => readFile(path, "utf8")))
-).join("").trim();
+async function restoreImage(chunkPaths, outputPath) {
+  const encodedImage = (
+    await Promise.all(chunkPaths.map((path) => readFile(path, "utf8")))
+  ).join("").trim();
+  await writeFile(outputPath, Buffer.from(encodedImage, "base64"));
+}
 
 await mkdir(productsDirectory, { recursive: true });
-await writeFile(gloveOutputPath, Buffer.from(encodedGloveImage, "base64"));
+await Promise.all([
+  restoreImage(gloveChunkPaths, gloveOutputPath),
+  restoreImage(cassockChunkPaths, cassockOutputPath),
+]);
 
-// Product cards and dialogs use only the primary image. The uploaded glove photo
-// replaces the previous asset everywhere the Specter Gloves appear.
+// Product cards and dialogs use only the primary image. Uploaded replacement
+// photos are restored during the static build and used everywhere on the site.
 const pageOriginal = await readFile(pagePath, "utf8");
 const pageUpdated = pageOriginal
   .replace(/^\s*gallery:\s*\[[^\n]*\],\s*$/gm, "")
-  .replaceAll("/products/specter-gloves-leather.png", "/products/specter-gloves-leather.webp");
+  .replaceAll("/products/specter-gloves-leather.png", "/products/specter-gloves-leather.webp")
+  .replaceAll("/products/male-ghost-cassock.png", "/products/ghost-cassock.webp");
 
 if (pageUpdated !== pageOriginal) {
   await writeFile(pagePath, pageUpdated);
 }
 
 const storyOriginal = await readFile(storyPath, "utf8");
-const storyUpdated = storyOriginal.replaceAll(
-  "/products/specter-gloves-leather.png",
-  "/products/specter-gloves-leather.webp",
-);
+const storyUpdated = storyOriginal
+  .replaceAll("/products/specter-gloves-leather.png", "/products/specter-gloves-leather.webp")
+  .replaceAll("/products/male-ghost-cassock.png", "/products/ghost-cassock.webp");
 
 if (storyUpdated !== storyOriginal) {
   await writeFile(storyPath, storyUpdated);
 }
 
-const responsiveMarker = "/* SPECTER_GLOVES_RESPONSIVE */";
+const responsiveMarker = "/* PRODUCT_IMAGES_RESPONSIVE */";
 const responsiveStyles = `
 ${responsiveMarker}
 .product-image img,
 .modal-image-stage img,
 .search-results img,
 .cart-line img,
-.secure-purchase-line img {
+.secure-purchase-line img,
+.ghost-line-grid img {
   display: block;
   width: 100%;
   max-width: 100%;
@@ -60,6 +71,13 @@ ${responsiveMarker}
     height: auto;
     max-height: 70svh;
     object-fit: contain;
+    object-position: center;
+  }
+
+  .ghost-line-grid img {
+    min-height: 0;
+    object-fit: cover;
+    object-position: 50% 35%;
   }
 }
 `;
@@ -69,7 +87,7 @@ if (!stylesOriginal.includes(responsiveMarker)) {
   await writeFile(stylesPath, `${stylesOriginal.trimEnd()}\n\n${responsiveStyles}`);
 }
 
-const storyResponsiveMarker = "/* SPECTER_STORY_RESPONSIVE */";
+const storyResponsiveMarker = "/* STORY_PRODUCT_IMAGES_RESPONSIVE */";
 const storyResponsiveStyles = `
 ${storyResponsiveMarker}
 .productGrid img {
@@ -87,4 +105,4 @@ if (!storyStylesOriginal.includes(storyResponsiveMarker)) {
   await writeFile(storyStylesPath, `${storyStylesOriginal.trimEnd()}\n\n${storyResponsiveStyles}`);
 }
 
-console.log("Installed the responsive Specter Gloves image and removed secondary galleries.");
+console.log("Installed responsive Ghost Cassock and Specter Gloves replacement images.");
