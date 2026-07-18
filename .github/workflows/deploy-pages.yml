@@ -44,7 +44,11 @@ jobs:
           OUTPUT=$(node scripts/one-image-per-product.mjs 2>&1)
           CODE=$?
           printf '%s\n' "$OUTPUT"
-          DIAGNOSTIC=$(printf '%s\n' "$OUTPUT" | tail -n 1 | tr -cd '[:alnum:] ._:/=-' | cut -c1-72)
+          DIAGNOSTIC=$(printf '%s\n' "$OUTPUT" | grep -E -m1 'Error:|ENOENT|verification failed|failed:' || true)
+          if [ -z "$DIAGNOSTIC" ]; then
+            DIAGNOSTIC=$(printf '%s\n' "$OUTPUT" | head -n 1)
+          fi
+          DIAGNOSTIC=$(printf '%s' "$DIAGNOSTIC" | tr -cd '[:alnum:] ._:/=-' | cut -c1-72)
           echo "diagnostic=$DIAGNOSTIC" >> "$GITHUB_OUTPUT"
           exit "$CODE"
 
