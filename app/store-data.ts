@@ -1,3 +1,5 @@
+import { GHOST_CASSOCK_HD } from "./ghost-cassock-hd";
+
 export type Category = "all" | "headwear" | "clothing" | "accessories" | "footwear";
 export type GhostLine = "all" | "male" | "female";
 export type PriceTier = "all" | "under" | "premium";
@@ -49,9 +51,8 @@ export const products: Product[] = [
   },
   {
     id: "ghost-cassock", name: "GHOST CASSOCK", code: "GC-003", note: "Movement-ready stretch cassock",
-    category: "clothing", line: "male", price: 148, image: asset("/products/male-ghost-cassock.png"),
-    gallery: [asset("/products/ghost-cassock-detail.png"), asset("/editorial/ghost-male-field.png"), asset("/editorial/ghost-duo-field.png")],
-    sizes: ["S", "M", "L", "XL"], tone: "#c5c4bf",
+    category: "clothing", line: "male", price: 148, image: GHOST_CASSOCK_HD,
+    sizes: ["S", "M", "L", "XL"], tone: "#17191a",
     description: "A fitted floor-length black cassock engineered for free movement, with an attached hood, articulated sleeves and clean athletic lines.",
     details: ["Four-way stretch shell", "Underarm gussets", "Two-way front closure", "Twin movement vents"], badge: "LIMITED",
   },
