@@ -501,7 +501,7 @@ export default function Home() {
 
       <section className="campaign">
         <p className="eyebrow">GHOST CLOSET / UNIFORMS 01 + 02</p>
-        <p className="campaign-copy">You can’t touch what you can’t see.<span> You’re a ghost now.</span></p>
+        <p className="campaign-copy">Some people wear clothes.<span>OTHERS WEAR PRESENCE.</span></p>
         <button onClick={() => selectCategory("clothing")}>SHOP CLOTHING →</button>
       </section>
 
