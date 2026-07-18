@@ -2,8 +2,8 @@
 
 Build: **success**
 
-Deploy: **failure**
+Deploy: **success**
 
-Run ID: **29638477863**
+Run ID: **29639438951**
 
 Target: <https://ghostxlebanon.github.io/GhostCloset---GC/>
