@@ -6,13 +6,30 @@ const stylesPath = new URL("../app/globals.css", import.meta.url);
 const storyStylesPath = new URL("../app/story/story.module.css", import.meta.url);
 const productsDirectory = new URL("../public/products/", import.meta.url);
 const gloveOutputPath = new URL("../public/products/specter-gloves-leather.webp", import.meta.url);
-const cassockOutputPath = new URL("../public/products/ghost-cassock.webp", import.meta.url);
+const cassockOutputPath = new URL("../public/products/ghost-cassock-hd-v2.webp", import.meta.url);
 
 const gloveChunkPaths = [0, 1, 2, 3, 4].map((index) =>
   new URL(`../assets/specter-gloves/part-${String(index).padStart(2, "0")}.txt`, import.meta.url),
 );
-const cassockChunkPaths = [0, 1, 2].map((index) =>
-  new URL(`../assets/ghost-cassock/part-${String(index).padStart(2, "0")}.txt`, import.meta.url),
+
+const cassockChunkNames = [
+  "part-00.txt",
+  "part-01.txt",
+  "part-02-00.txt",
+  "part-02-01.txt",
+  "part-02-02.txt",
+  "part-02-03.txt",
+  "part-02-04.txt",
+  "part-02-05.txt",
+  "part-03-00.txt",
+  "part-03-01.txt",
+  "part-03-02.txt",
+  "part-03-03.txt",
+  "part-03-04.txt",
+  "part-03-05.txt",
+];
+const cassockChunkPaths = cassockChunkNames.map(
+  (name) => new URL(`../assets/ghost-cassock-hd/${name}`, import.meta.url),
 );
 
 async function restoreImage(chunkPaths, outputPath) {
@@ -28,13 +45,14 @@ await Promise.all([
   restoreImage(cassockChunkPaths, cassockOutputPath),
 ]);
 
-// Product cards and dialogs use only the primary image. Uploaded replacement
-// photos are restored during the static build and used everywhere on the site.
+// Product cards and dialogs use only the primary image. The cache-busted HD
+// filename prevents browsers from reusing the earlier heavily compressed file.
 const pageOriginal = await readFile(pagePath, "utf8");
 const pageUpdated = pageOriginal
   .replace(/^\s*gallery:\s*\[[^\n]*\],\s*$/gm, "")
   .replaceAll("/products/specter-gloves-leather.png", "/products/specter-gloves-leather.webp")
-  .replaceAll("/products/male-ghost-cassock.png", "/products/ghost-cassock.webp");
+  .replaceAll("/products/male-ghost-cassock.png", "/products/ghost-cassock-hd-v2.webp")
+  .replaceAll("/products/ghost-cassock.webp", "/products/ghost-cassock-hd-v2.webp");
 
 if (pageUpdated !== pageOriginal) {
   await writeFile(pagePath, pageUpdated);
@@ -43,13 +61,14 @@ if (pageUpdated !== pageOriginal) {
 const storyOriginal = await readFile(storyPath, "utf8");
 const storyUpdated = storyOriginal
   .replaceAll("/products/specter-gloves-leather.png", "/products/specter-gloves-leather.webp")
-  .replaceAll("/products/male-ghost-cassock.png", "/products/ghost-cassock.webp");
+  .replaceAll("/products/male-ghost-cassock.png", "/products/ghost-cassock-hd-v2.webp")
+  .replaceAll("/products/ghost-cassock.webp", "/products/ghost-cassock-hd-v2.webp");
 
 if (storyUpdated !== storyOriginal) {
   await writeFile(storyPath, storyUpdated);
 }
 
-const responsiveMarker = "/* PRODUCT_IMAGES_RESPONSIVE */";
+const responsiveMarker = "/* PRODUCT_IMAGES_HD_V2 */";
 const responsiveStyles = `
 ${responsiveMarker}
 .product-image img,
@@ -64,20 +83,35 @@ ${responsiveMarker}
   height: 100%;
   object-fit: cover;
   object-position: center;
+  image-rendering: auto;
+}
+
+img[src$="ghost-cassock-hd-v2.webp"] {
+  image-rendering: auto;
+  object-position: 50% 34%;
+  filter: none;
+}
+
+.ghost-line-grid img[src$="ghost-cassock-hd-v2.webp"] {
+  mix-blend-mode: normal;
+  filter: none;
 }
 
 @media (max-width: 720px) {
   .modal-image-stage img {
+    width: auto;
+    max-width: 100%;
     height: auto;
-    max-height: 70svh;
+    max-height: 76svh;
+    margin-inline: auto;
     object-fit: contain;
     object-position: center;
   }
 
-  .ghost-line-grid img {
+  .ghost-line-grid img[src$="ghost-cassock-hd-v2.webp"] {
     min-height: 0;
     object-fit: cover;
-    object-position: 50% 35%;
+    object-position: 50% 30%;
   }
 }
 `;
@@ -87,7 +121,7 @@ if (!stylesOriginal.includes(responsiveMarker)) {
   await writeFile(stylesPath, `${stylesOriginal.trimEnd()}\n\n${responsiveStyles}`);
 }
 
-const storyResponsiveMarker = "/* STORY_PRODUCT_IMAGES_RESPONSIVE */";
+const storyResponsiveMarker = "/* STORY_PRODUCT_IMAGES_HD_V2 */";
 const storyResponsiveStyles = `
 ${storyResponsiveMarker}
 .productGrid img {
@@ -97,6 +131,7 @@ ${storyResponsiveMarker}
   height: 100%;
   object-fit: cover;
   object-position: center;
+  image-rendering: auto;
 }
 `;
 
@@ -105,4 +140,4 @@ if (!storyStylesOriginal.includes(storyResponsiveMarker)) {
   await writeFile(storyStylesPath, `${storyStylesOriginal.trimEnd()}\n\n${storyResponsiveStyles}`);
 }
 
-console.log("Installed responsive Ghost Cassock and Specter Gloves replacement images.");
+console.log("Installed full-resolution Ghost Cassock and responsive product imagery.");
