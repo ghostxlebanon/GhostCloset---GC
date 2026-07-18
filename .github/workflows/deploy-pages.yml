@@ -30,18 +30,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Apply storefront security and product corrections
+        run: node scripts/harden-storefront.mjs
+
       - name: Retrieve storefront imagery
         run: bash scripts/download-storefront-assets.sh
 
-      - name: Preserve imagery in this repository
+      - name: Preserve storefront corrections and imagery
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/products public/editorial
+          git add app/page.tsx app/globals.css public/products public/editorial
           if ! git diff --cached --quiet; then
-            git commit -m "Add Ghost Closet storefront imagery"
+            git commit -m "Harden Ghost Closet storefront"
             if ! git push origin HEAD:main; then
-              echo "The deployment can continue even though the image cache could not be pushed."
+              echo "The deployment can continue even though generated storefront changes could not be pushed."
             fi
           fi
 
