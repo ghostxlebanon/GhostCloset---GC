@@ -235,7 +235,6 @@ export default function Home() {
   const [checkoutStep, setCheckoutStep] = useState<1 | 2 | 3>(1);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [ready, setReady] = useState(false);
-  const [lightsOn, setLightsOn] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
@@ -259,7 +258,7 @@ export default function Home() {
     window.localStorage.setItem("ghost-closet-favorites", JSON.stringify(favorites));
   }, [cart, favorites, cartLoaded]);
 
-  const modalOpen = Boolean(!lightsOn || selected || cartOpen || menuOpen || searchOpen || infoPage || checkoutOpen);
+  const modalOpen = Boolean(selected || cartOpen || menuOpen || searchOpen || infoPage || checkoutOpen);
   useEffect(() => {
     document.body.style.overflow = modalOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
@@ -362,23 +361,8 @@ export default function Home() {
   }
 
   return (
-    <main className={`${ready ? "site is-ready" : "site"} ${lightsOn ? "lights-on" : "lights-off"}`}>
+    <main className={ready ? "site is-ready lights-on" : "site lights-off"}>
       <div className="loader" aria-hidden="true"><span>GC</span></div>
-
-      <div className={lightsOn ? "closet-entry is-lit" : "closet-entry"} role="dialog" aria-modal={!lightsOn} aria-labelledby="light-prompt-title" aria-hidden={lightsOn}>
-        <div className="closet-doors" aria-hidden="true"><span /><span /></div>
-        <div className="entry-glow" aria-hidden="true" />
-        <div className="light-prompt">
-          <p>GHOST CLOSET / LIGHT SYSTEM</p>
-          <h2 id="light-prompt-title">IT’S DARK<br />IN HERE.</h2>
-          <span className="prompt-copy">Switch on the neon to enter the closet.</span>
-          <button onClick={() => setLightsOn(true)} autoFocus={!lightsOn}>
-            <span className="switch-track" aria-hidden="true"><span /></span>
-            TURN NEON LIGHTS ON
-          </button>
-        </div>
-        <span className="entry-status">SYSTEM OFFLINE <i /> 00:00</span>
-      </div>
 
       <div className="announcement">
         <span>DROP 001 IS LIVE</span><span>FREE DELIVERY OVER €150</span><span>14-DAY RETURNS</span>
@@ -395,9 +379,9 @@ export default function Home() {
           <button className={category === "accessories" ? "nav-link active" : "nav-link"} onClick={() => selectCategory("accessories")}>ACCESSORIES</button>
         </nav>
         <div className="header-actions">
-          <button className="light-toggle" onClick={() => setLightsOn(false)} aria-label="Turn neon lights off">
+          <span className="light-toggle" aria-label="Neon lights are on">
             <span aria-hidden="true" /> LIGHTS ON
-          </button>
+          </span>
           <button className="text-action search-action" onClick={() => setSearchOpen(true)}>SEARCH</button>
           <button className="text-action menu-button" onClick={() => setMenuOpen(true)}>MENU</button>
           <button className="cart-button" onClick={() => setCartOpen(true)}>BAG [{String(itemCount).padStart(2, "0")}]</button>
