@@ -27,11 +27,6 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Enable GitHub Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
       - name: Install dependencies
         run: npm ci
 
@@ -49,6 +44,11 @@ jobs:
               echo "The deployment can continue even though the image cache could not be pushed."
             fi
           fi
+
+      - name: Enable GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Build static storefront
         run: npm run build:pages
