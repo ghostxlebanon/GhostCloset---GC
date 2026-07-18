@@ -26,6 +26,9 @@ assets=(
 
 for asset in "${assets[@]}"; do
   mkdir -p "public/$(dirname "${asset}")"
+  if [[ -s "public/${asset}" ]]; then
+    continue
+  fi
   curl --fail --location --retry 3 --silent --show-error \
     "${source_base}/${asset}" \
     --output "public/${asset}"
