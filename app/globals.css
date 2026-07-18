@@ -142,7 +142,7 @@ img { max-width: 100%; }
 
 .campaign { min-height: 92svh; padding: 30px 17px 22px; display: flex; flex-direction: column; justify-content: space-between; background: #020303; color: var(--ink); }
 .campaign-copy { max-width: 1500px; margin: auto 0; font-size: clamp(4rem, 10.4vw, 11rem); line-height: .78; letter-spacing: -.085em; font-weight: 900; }
-.campaign-copy span { color: var(--acid); }
+.campaign-copy span { display: block; color: var(--acid); }
 .campaign > button { align-self: flex-start; padding: 0 0 4px; border-bottom: 1px solid; font-size: .64rem; font-weight: 800; letter-spacing: .08em; }
 .service-grid { display: grid; grid-template-columns: repeat(3,1fr); border-bottom: 1px solid var(--ink); }
 .service-grid > button { min-height: 270px; padding: 17px; display: flex; flex-direction: column; align-items: flex-start; text-align: left; border-right: 1px solid var(--ink); }
