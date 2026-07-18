@@ -1,7 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 
 const pagePath = new URL("../app/page.tsx", import.meta.url);
-const cssPath = new URL("../app/globals.css", import.meta.url);
 let source = await readFile(pagePath, "utf8");
 let changed = false;
 
@@ -34,6 +33,12 @@ replaceOnce(
   "announcement",
   '        <span>DROP 001 IS LIVE</span><span>FREE DELIVERY OVER €150</span><span>14-DAY RETURNS</span>',
   '        <span>DROP 001 PREVIEW</span><span>SECURE OFFICIAL-STORE CHECKOUT</span><span>NO CARD DATA COLLECTED HERE</span>',
+);
+
+replaceOnce(
+  "Story showcase link",
+  '          <span className="light-toggle" aria-label="Neon lights are on">',
+  '          <a className="text-action story-action" href={`${BASE_PATH}/story/`}>STORY</a>\n          <span className="light-toggle" aria-label="Neon lights are on">',
 );
 
 replaceOnce(
@@ -119,27 +124,4 @@ if (changed) {
   console.log("Ghost Closet storefront hardened.");
 } else {
   console.log("Ghost Closet storefront already hardened.");
-}
-
-let css = await readFile(cssPath, "utf8");
-const securityStyles = `
-
-/* Secure purchase router */
-.purchase-router .checkout-main { overflow-y: auto; }
-.secure-copy { max-width: 680px; margin: 20px 0 28px; color: var(--muted); font-size: .72rem; line-height: 1.65; text-transform: uppercase; letter-spacing: .04em; }
-.secure-notice { border-color: var(--acid); color: var(--acid); }
-.secure-purchase-list { display: grid; border-top: 1px solid var(--line); }
-.secure-purchase-line { min-height: 92px; padding: 12px 0; display: grid; grid-template-columns: 68px minmax(0,1fr) auto; align-items: center; gap: 15px; border-bottom: 1px solid var(--line); }
-.secure-purchase-line img { width: 68px; height: 68px; object-fit: cover; background: #c8c7c2; }
-.secure-purchase-line span { display: grid; gap: 5px; }
-.secure-purchase-line strong { font-size: .72rem; letter-spacing: .04em; }
-.secure-purchase-line small, .secure-purchase-line em { color: var(--muted); font-size: .58rem; font-style: normal; font-weight: 800; letter-spacing: .07em; }
-.secure-purchase-line a { padding: 12px 14px; border: 1px solid var(--acid); color: var(--acid); font-size: .58rem; font-weight: 900; letter-spacing: .07em; white-space: nowrap; }
-.secure-purchase-line a:hover, .secure-purchase-line a:focus-visible { background: var(--acid); color: #050606; outline: 0; }
-@media (max-width: 720px) { .secure-purchase-line { grid-template-columns: 58px 1fr; } .secure-purchase-line img { width: 58px; height: 58px; } .secure-purchase-line a, .secure-purchase-line em { grid-column: 1 / -1; width: 100%; text-align: center; } }
-`;
-
-if (!css.includes("/* Secure purchase router */")) {
-  await writeFile(cssPath, `${css}${securityStyles}`);
-  console.log("Ghost Closet security styles added.");
 }
