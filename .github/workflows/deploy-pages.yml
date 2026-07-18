@@ -70,14 +70,14 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BUILD_RESULT: ${{ needs.build.result }}
           DEPLOY_RESULT: ${{ needs.deploy.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           if [ "$BUILD_RESULT" = "success" ] && [ "$DEPLOY_RESULT" = "success" ]; then
             STATE=success
-            DESCRIPTION="HD storefront build and deployment succeeded"
           else
             STATE=failure
-            DESCRIPTION="HD storefront deployment failed"
           fi
+          DESCRIPTION="build=$BUILD_RESULT deploy=$DEPLOY_RESULT"
 
           curl --fail-with-body --silent --show-error \
             --request POST \
@@ -85,4 +85,4 @@ jobs:
             --header "Authorization: Bearer $GH_TOKEN" \
             --header "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            --data "{\"state\":\"$STATE\",\"context\":\"ghost-closet/pages\",\"description\":\"$DESCRIPTION\"}"
+            --data "{\"state\":\"$STATE\",\"context\":\"ghost-closet/pages\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$RUN_URL\"}"
