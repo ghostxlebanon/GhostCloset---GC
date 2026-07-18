@@ -71,3 +71,28 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  status:
+    if: always()
+    runs-on: ubuntu-latest
+    needs: [build, deploy]
+    steps:
+      - name: Check out latest repository state
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Record deployment result
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+        run: |
+          printf '# GitHub Pages deployment\n\nBuild: **%s**\n\nDeploy: **%s**\n\nTarget: <https://ghostxlebanon.github.io/GhostCloset---GC/>\n' \
+            "$BUILD_RESULT" "$DEPLOY_RESULT" > DEPLOYMENT_STATUS.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add DEPLOYMENT_STATUS.md
+          if ! git diff --cached --quiet; then
+            git commit -m "Record GitHub Pages deployment status"
+            git push origin HEAD:main
+          fi
