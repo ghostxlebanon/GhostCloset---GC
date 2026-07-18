@@ -1,9 +1,9 @@
 # GitHub Pages deployment
 
-Build: **failure**
+Build: **success**
 
-Deploy: **skipped**
+Deploy: **cancelled**
 
-Run ID: **29649319224**
+Run ID: **29649347009**
 
 Target: <https://ghostxlebanon.github.io/GhostCloset---GC/>
