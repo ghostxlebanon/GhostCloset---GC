@@ -1,0 +1,10 @@
+# Ghost Closet is owner-controlled. Every repository path is owned by ghostxlebanon.
+* @ghostxlebanon
+
+# Explicit protection for high-risk areas.
+/.github/workflows/ @ghostxlebanon
+/app/ @ghostxlebanon
+/public/ @ghostxlebanon
+/scripts/ @ghostxlebanon
+/package.json @ghostxlebanon
+/package-lock.json @ghostxlebanon
