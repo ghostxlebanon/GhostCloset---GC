@@ -33,6 +33,9 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      - name: Prepare verified HD product imagery
+        run: node scripts/one-image-per-product.mjs
+
       - name: Build static storefront
         run: npm run build:pages
         env:
@@ -54,3 +57,32 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+
+  status:
+    if: always()
+    runs-on: ubuntu-latest
+    needs: [build, deploy]
+    permissions:
+      statuses: write
+    steps:
+      - name: Publish deployment verification
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+        run: |
+          if [ "$BUILD_RESULT" = "success" ] && [ "$DEPLOY_RESULT" = "success" ]; then
+            STATE=success
+            DESCRIPTION="HD storefront build and deployment succeeded"
+          else
+            STATE=failure
+            DESCRIPTION="HD storefront deployment failed"
+          fi
+
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            --data "{\"state\":\"$STATE\",\"context\":\"ghost-closet/pages\",\"description\":\"$DESCRIPTION\"}"
