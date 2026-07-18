@@ -45,11 +45,6 @@ jobs:
             fi
           fi
 
-      - name: Enable GitHub Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
       - name: Build static storefront
         run: npm run build:pages
         env:
